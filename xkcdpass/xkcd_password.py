@@ -211,17 +211,26 @@ def try_input(prompt, validate):
     # validate input
     return validate(answer)
 
+def capitalize_letters(word_list):
+        temp_wordlist = []
+        for x in range(len(word_list)):
+            temp_wordlist.append(word_list[x].capitalize())
+        word_list = temp_wordlist
+        return word_list
+
 
 def generate_xkcdpassword(wordlist,
                           numwords=6,
                           interactive=False,
                           acrostic=False,
-                          delimiter=" "):
+                          delimiter=" ",
+                          capitalize_first_letter=False):
     """
     Generate an XKCD-style password from the words in wordlist.
     """
 
     passwd = None
+    temp_list = []
 
     # generate the worddict if we are looking for acrostics
     if acrostic:
@@ -230,9 +239,14 @@ def generate_xkcdpassword(wordlist,
     # useful if driving the logic from other code
     if not interactive:
         if not acrostic:
-            passwd = delimiter.join(choose_words(wordlist, numwords))
+            temp_list = choose_words(wordlist, numwords)
         else:
-            passwd = delimiter.join(find_acrostic(acrostic, worddict))
+            temp_list = find_acrostic(acrostic, worddict)
+
+        if capitalize_first_letter:
+            temp_list = capitalize_letters(temp_list)
+
+        passwd = delimiter.join(temp_list)
 
         return passwd
 
@@ -270,9 +284,14 @@ def generate_xkcdpassword(wordlist,
 
     while not accepted:
         if not acrostic:
-            passwd = delimiter.join(choose_words(wordlist, numwords))
+            temp_list = choose_words(wordlist, numwords)
         else:
-            passwd = delimiter.join(find_acrostic(acrostic, worddict))
+            temp_list = find_acrostic(acrostic, worddict)
+
+        if capitalize_first_letter:
+            temp_list = capitalize_letters(temp_list)
+
+        passwd = delimiter.join(temp_list)
         print("Generated: " + passwd)
         accepted = try_input("Accept? [yN] ", accepted_validator)
 
@@ -288,7 +307,8 @@ def emit_passwords(wordlist, options):
             interactive=options.interactive,
             numwords=options.numwords,
             acrostic=options.acrostic,
-            delimiter=options.delimiter))
+            delimiter=options.delimiter,
+            capitalize_first_letter=options.capitalize_first_letter))
         count -= 1
 
 
@@ -355,6 +375,13 @@ class XkcdPassArgumentParser(argparse.ArgumentParser):
                 "Allow fallback to weak RNG if the "
                 "system does not support cryptographically secure RNG. "
                 "Only use this if you know what you are doing."))
+        self.add_argument(
+            "-C", "--capitalize-first-letter",
+            action="store_true", dest="capitalize_first_letter", default=False,
+            help=(
+                "Capitalizes every first letter of a generated word"
+            )
+        )
 
 
 def main(argv=None):
